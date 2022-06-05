@@ -1,3 +1,10 @@
+/* Nathan Dynice
+   Data Structures
+   Summer 2022
+   Dr. M Geiger */
+
+   /* This program converts text short hand from them dang kids into normal human speak. XD */
+
 #include <iostream>
 #include <string>
 using namespace std;

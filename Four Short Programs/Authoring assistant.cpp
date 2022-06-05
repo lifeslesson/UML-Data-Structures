@@ -162,5 +162,7 @@ int main() {
     //ReplaceExclamation(userInput);
     //ShortenSpace(userInput);
     PrintMenu(userInput);
+
+
     return 0;
 }
