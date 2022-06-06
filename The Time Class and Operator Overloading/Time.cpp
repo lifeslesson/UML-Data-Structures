@@ -26,10 +26,22 @@ ostream& operator <<(ostream& out, const Time& rhs) {
 	*    mm			= # of minutes (always 2 digits)
 	*    _M			= AM or PM
 	**************************************************/
+	
+	int hours = rhs.hours, minutes = rhs.minutes;
+	char AP = rhs.AMorPM;
 
-	// set the clock to 12 midnight from military time to normal people time
-	out << rhs.hours << ':' << setw(2) << setfill('0') << rhs.minutes
-		<< ' ' << rhs.AMorPM << 'M';
+	if(hours == 0) {
+		hours = 12;
+	}
+	out << hours << ":";
+	
+	if (minutes < 10) {
+		out << "0" << minutes;
+	}
+	else {
+		out << minutes;
+	}
+	out << " " << AP << "M";
 
 	return out;
 
@@ -46,12 +58,14 @@ istream& operator >>(istream& in, Time& rhs) {
 	*    mm			= # of minutes (always 2 digits)
 	*    _M			= AM or PM
 	**************************************************/
-	in >> setw(2) >> rhs.hours;
-	in.ignore(1, ':');
-	in >> setw(2) >> rhs.minutes;
-	//in.ignore(1, isspace(in));
-	in >> rhs.AMorPM;
-	in.ignore(1, 'M');
+
+	unsigned hours, minutes;
+	char AP;
+
+	in >> hours >> minutes >> AP;
+
+	rhs.set(hours, minutes, AP);
+	cin.ignore();
 
 	return in;
 
@@ -64,10 +78,8 @@ bool Time::operator ==(const Time& rhs) {
 	* Returns true if calling object matches rhs,
 	*   false otherwise
 	*********************************************/
-	if (hours == rhs.hours && minutes == rhs.minutes && AMorPM == rhs.AMorPM) {
-		return false;
-	}
-	return true;
+	
+	return operator == (rhs);
 }
 
 bool Time::operator !=(const Time& rhs) {
@@ -76,10 +88,8 @@ bool Time::operator !=(const Time& rhs) {
 	* Returns true if calling object doesn't match rhs,
 	*   false otherwise
 	***************************************************/
-	if (hours != rhs.hours && minutes != rhs.minutes && AMorPM != rhs.AMorPM) {
-		return false;
-	}
-	return true;
+	
+	return !operator == (rhs);
 }
 
 bool Time::operator <(const Time& rhs) {
@@ -88,10 +98,8 @@ bool Time::operator <(const Time& rhs) {
 	* Returns true if calling object is less
 	*   (earlier in day) than rhs, false otherwise
 	***********************************************/
-	if (miltime < rhs.miltime) {
-		return false;
-	}
-	return true;
+	
+	return operator < (rhs);
 }
 
 bool Time::operator >(const Time& rhs) {
@@ -100,28 +108,23 @@ bool Time::operator >(const Time& rhs) {
 	* Returns true if calling object is greater
 	*   (later in day) than rhs, false otherwise
 	*********************************************/
-	if (miltime > rhs.miltime) {
-		return false;
-	}
-	return true;
+	
+	return !operator > (rhs);
 }
 
 // Arithmetic operators
 Time Time::operator +(const Time& rhs) {
-	int sum;
+	Time sum;
 
 	/********************************************
 	* Add two Time objects and return sum
 	*   See examples in spec
 	*********************************************/
 
-	hours = hours + rhs.hours;
-	minutes = minutes + rhs.minutes;
+	sum.hours = hours + rhs.hours;
+	sum.minutes = minutes + rhs.minutes;
 
-	sum = (hours * 1000) + minutes;
-	//sum.miltime = miltime + miltime;
-
-	return const sum;
+	return sum;
 }
 
 
@@ -133,7 +136,8 @@ Time Time::operator -(const Time& rhs) {
 	*   See examples in spec
 	**************************************************/
 
-	diff.miltime = (miltime - rhs.miltime);
+	diff.hours = hours - rhs.hours;
+	diff.minutes = minutes - rhs.minutes;
 
 	return diff;
 }
@@ -145,7 +149,16 @@ Time& Time::operator +=(const Time& rhs) {
 	*   and returns reference to calling object
 	***************************************************/
 
-	this->miltime += rhs.miltime;
+	int hours = rhs.hours;
+	int minutes = rhs.minutes;
+
+	if (rhs.AMorPM == 'P') {
+		hours += 12;
+	}
+
+	this -> advance(hours, minutes);
+
+	return *this;
 }
 
 Time& Time::operator -=(const Time& rhs) {
@@ -154,8 +167,10 @@ Time& Time::operator -=(const Time& rhs) {
 	* Same as - operator, but modifies calling object
 	*   and returns reference to calling object
 	***************************************************/
+	
+	*this = *this - rhs;
 
-	this->miltime -= rhs.miltime;
+	return *this;
 }
 
 // Increment operators--adds 1 minute to current time
@@ -163,10 +178,22 @@ Time& Time::operator++() {
 	/*************************
 	* Pre-increment operator
 	**************************/
+	minutes = minutes + 1;
 
-	ostream set();
-	minutes++;
-
+	if (minutes == 60) {
+		minutes = 0;
+		++hours;
+	}
+	if (hours > 12) {
+		hours %= 12;
+		if (AMorPM == 'P') {
+			AMorPM = 'A';
+		}
+		else if (AMorPM == 'A') {
+			AMorPM = 'P';
+		}
+	}
+	return *this;
 }
 
 Time Time::operator++(int) {
