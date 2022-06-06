@@ -26,25 +26,17 @@ ostream& operator <<(ostream& out, const Time& rhs) {
 	*    mm			= # of minutes (always 2 digits)
 	*    _M			= AM or PM
 	**************************************************/
-	
-	int hours = rhs.hours, minutes = rhs.minutes;
-	char AP = rhs.AMorPM;
 
-	if(hours == 0) {
-		hours = 12;
-	}
-	out << hours << ":";
-	
-	if (minutes < 10) {
-		out << "0" << minutes;
-	}
-	else {
-		out << minutes;
-	}
-	out << " " << AP << "M";
+	out << rhs.hours << ":" << setw(2) << setfill('0') << rhs.minutes
+		<< ' ' << rhs.AMorPM << 'M';
+
+
+
+
+	//out << rhs.hours << rhs.minutes << rhs.AMorPM;
+	//rhs.display(rhs.set(rhs.hours, rhs.minutes, rhs.AMorPM));
 
 	return out;
-
 }
 
 // Input operator
@@ -59,16 +51,21 @@ istream& operator >>(istream& in, Time& rhs) {
 	*    _M			= AM or PM
 	**************************************************/
 
-	unsigned hours, minutes;
-	char AP;
+	in >> setw(2) >> rhs.hours;
+	in.ignore(1, ':');
+	in >> setw(2) >> rhs.minutes;
+	//in.ignore(1, isspace(in));
+	in >> rhs.AMorPM;
+	in.ignore(1, 'M');
 
-	in >> hours >> minutes >> AP;
 
-	rhs.set(hours, minutes, AP);
-	cin.ignore();
+
+
+
+	//in >> rhs.hours >> rhs.minutes >> rhs.AMorPM;
+	//rhs.set(rhs.hours, rhs.minutes, rhs.AMorPM);
 
 	return in;
-
 }
 
 // Comparison operators
@@ -78,8 +75,8 @@ bool Time::operator ==(const Time& rhs) {
 	* Returns true if calling object matches rhs,
 	*   false otherwise
 	*********************************************/
-	
-	return operator == (rhs);
+
+	return (hours == rhs.hours && minutes == rhs.minutes && AMorPM == rhs.AMorPM);
 }
 
 bool Time::operator !=(const Time& rhs) {
@@ -88,8 +85,8 @@ bool Time::operator !=(const Time& rhs) {
 	* Returns true if calling object doesn't match rhs,
 	*   false otherwise
 	***************************************************/
-	
-	return !operator == (rhs);
+
+	return (hours != rhs.hours || minutes != rhs.minutes || AMorPM != rhs.AMorPM);
 }
 
 bool Time::operator <(const Time& rhs) {
@@ -98,8 +95,8 @@ bool Time::operator <(const Time& rhs) {
 	* Returns true if calling object is less
 	*   (earlier in day) than rhs, false otherwise
 	***********************************************/
-	
-	return operator < (rhs);
+
+	return (miltime < rhs.miltime);
 }
 
 bool Time::operator >(const Time& rhs) {
@@ -108,8 +105,8 @@ bool Time::operator >(const Time& rhs) {
 	* Returns true if calling object is greater
 	*   (later in day) than rhs, false otherwise
 	*********************************************/
-	
-	return !operator > (rhs);
+
+	return (miltime > rhs.miltime);
 }
 
 // Arithmetic operators
@@ -121,10 +118,11 @@ Time Time::operator +(const Time& rhs) {
 	*   See examples in spec
 	*********************************************/
 
-	sum.hours = hours + rhs.hours;
-	sum.minutes = minutes + rhs.minutes;
+	sum.hours = hours + hours;
+	sum.minutes = minutes + minutes;
 
 	return sum;
+
 }
 
 
@@ -136,10 +134,10 @@ Time Time::operator -(const Time& rhs) {
 	*   See examples in spec
 	**************************************************/
 
-	diff.hours = hours - rhs.hours;
-	diff.minutes = minutes - rhs.minutes;
+	diff.miltime = (miltime - rhs.miltime);
 
 	return diff;
+
 }
 
 Time& Time::operator +=(const Time& rhs) {
@@ -156,7 +154,7 @@ Time& Time::operator +=(const Time& rhs) {
 		hours += 12;
 	}
 
-	this -> advance(hours, minutes);
+	this->advance(hours, minutes);
 
 	return *this;
 }
@@ -167,8 +165,9 @@ Time& Time::operator -=(const Time& rhs) {
 	* Same as - operator, but modifies calling object
 	*   and returns reference to calling object
 	***************************************************/
-	
-	*this = *this - rhs;
+
+	(*this) -> (*this) - rhs.hours - rhs.minutes;
+
 
 	return *this;
 }
