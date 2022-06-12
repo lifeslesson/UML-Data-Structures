@@ -27,14 +27,7 @@ ostream& operator <<(ostream& out, const Time& rhs) {
 	*    _M			= AM or PM
 	**************************************************/
 
-	out << rhs.hours << ":" << setw(2) << setfill('0') << rhs.minutes
-		<< ' ' << rhs.AMorPM << 'M';
-
-
-
-
-	//out << rhs.hours << rhs.minutes << rhs.AMorPM;
-	//rhs.display(rhs.set(rhs.hours, rhs.minutes, rhs.AMorPM));
+	rhs.display(out);
 
 	return out;
 }
@@ -51,19 +44,11 @@ istream& operator >>(istream& in, Time& rhs) {
 	*    _M			= AM or PM
 	**************************************************/
 
-	in >> setw(2) >> rhs.hours;
-	in.ignore(1, ':');
-	in >> setw(2) >> rhs.minutes;
-	//in.ignore(1, isspace(in));
-	in >> rhs.AMorPM;
-	in.ignore(1, 'M');
+	int h, m;
+	char AP, dots = ':', M = 'M';
 
-
-
-
-
-	//in >> rhs.hours >> rhs.minutes >> rhs.AMorPM;
-	//rhs.set(rhs.hours, rhs.minutes, rhs.AMorPM);
+	in >> h >> dots >> m >> AP >> M;
+	rhs.set(h, m, AP);
 
 	return in;
 }
@@ -96,7 +81,11 @@ bool Time::operator <(const Time& rhs) {
 	*   (earlier in day) than rhs, false otherwise
 	***********************************************/
 
-	return (miltime < rhs.miltime);
+	bool lessThanOp;
+
+	lessThanOp = AMorPM == 'A' && rhs.AMorPM == 'P' ? hours < rhs.hours ? minutes < rhs.minutes : true : false;
+
+	return lessThanOp;
 }
 
 bool Time::operator >(const Time& rhs) {
@@ -106,7 +95,11 @@ bool Time::operator >(const Time& rhs) {
 	*   (later in day) than rhs, false otherwise
 	*********************************************/
 
-	return (miltime > rhs.miltime);
+	bool greaterThanOp;
+
+	greaterThanOp = AMorPM == 'P' && rhs.AMorPM == 'A' ? hours > rhs.hours ? minutes > rhs.minutes : true : false;
+
+	return greaterThanOp;
 }
 
 // Arithmetic operators
@@ -118,8 +111,27 @@ Time Time::operator +(const Time& rhs) {
 	*   See examples in spec
 	*********************************************/
 
-	sum.hours = hours + hours;
-	sum.minutes = minutes + minutes;
+	int h, m;
+	char AP = AMorPM;
+	h = hours + rhs.hours;
+	m = minutes + rhs.minutes;
+
+	if (AP == 'P') {
+		h += 24;
+	}
+	else if (rhs.AMorPM == 'P') {
+		h += 12;
+	}
+
+	if (m < 0) {
+		h += m / 60;
+		h -= 1;
+		m += 60;
+	}
+
+
+
+	sum.advance(h, m);
 
 	return sum;
 
@@ -133,11 +145,26 @@ Time Time::operator -(const Time& rhs) {
 	* Subtract two Time objects and return difference
 	*   See examples in spec
 	**************************************************/
+	int h = rhs.hours, m = rhs.minutes;
+	char AP = AMorPM;
+	h = hours - h, m = minutes - m;
+	if (AP == 'P') {
+		h += 24;
+	}
+	else if (rhs.AMorPM == 'P') {
+		h += 12;
+	}
 
-	diff.miltime = (miltime - rhs.miltime);
 
+	if (m < 0) {
+		h += m / 60;
+		h -= 1;
+		m += 60;
+	}
+
+
+	diff.advance(h, m);
 	return diff;
-
 }
 
 Time& Time::operator +=(const Time& rhs) {
@@ -146,15 +173,14 @@ Time& Time::operator +=(const Time& rhs) {
 	* Same as + operator, but modifies calling object
 	*   and returns reference to calling object
 	***************************************************/
+	int h = rhs.hours, m = rhs.minutes;
+	char AP = AMorPM;
 
-	int hours = rhs.hours;
-	int minutes = rhs.minutes;
-
-	if (rhs.AMorPM == 'P') {
-		hours += 12;
+	if (AP == 'P' || rhs.AMorPM == 'P') {
+		h += 12;
 	}
 
-	this->advance(hours, minutes);
+	advance(h, m);
 
 	return *this;
 }
@@ -165,9 +191,15 @@ Time& Time::operator -=(const Time& rhs) {
 	* Same as - operator, but modifies calling object
 	*   and returns reference to calling object
 	***************************************************/
+	int h = rhs.hours, m = rhs.minutes;
+	char AP = AMorPM;
+	h = -h, m = -m;
+	if (AP == 'P' || rhs.AMorPM == 'P') {
+		h += 12;
+	}
 
-	(*this) -> (*this) - rhs.hours - rhs.minutes;
 
+	this->advance(h, m);
 
 	return *this;
 }
@@ -177,21 +209,17 @@ Time& Time::operator++() {
 	/*************************
 	* Pre-increment operator
 	**************************/
+
 	minutes = minutes + 1;
 
-	if (minutes == 60) {
-		minutes = 0;
+	if (minutes >= 60) {
 		++hours;
+		minutes -= 60;
 	}
-	if (hours > 12) {
-		hours %= 12;
-		if (AMorPM == 'P') {
-			AMorPM = 'A';
-		}
-		else if (AMorPM == 'A') {
-			AMorPM = 'P';
-		}
+	if (hours >= 12) {
+		AMorPM = (AMorPM == 'A') ? 'P' : 'A';
 	}
+
 	return *this;
 }
 
@@ -199,12 +227,19 @@ Time Time::operator++(int) {
 	/*************************
 	* Post-increment operator
 	**************************/
+	Time temp = *this;
 
-	Time m = *this;
+	minutes = minutes + 1;
 
-	m++;
+	if (minutes >= 60) {
+		++hours;
+		minutes -= 60;
+	}
+	if (hours >= 12) {
+		AMorPM = (AMorPM == 'A') ? 'P' : 'A';
+	}
 
-	return m;
+	return temp;
 
 }
 /*** END OVERLOADED OPERATORS TO BE ADDED FOR PROGRAM 3 ***/
@@ -235,7 +270,7 @@ void Time::set(unsigned h, unsigned m, char AP) {
 }
 
 // Print time to desired output stream
-void Time::display(ostream& out) {
+void Time::display(ostream& out) const {
 	out << hours << ':'
 		<< setw(2) << setfill('0') << minutes		// setw(2) forces minutes to be printed with 2 chars
 		<< ' ' << AMorPM << 'M';					// setfill('0') adds leading 0 to minutes if needed
@@ -253,7 +288,7 @@ void Time::advance(unsigned h, unsigned m) {
 												 //   is much easier using miltime!
 
 	// If sum of minutes >= 60, need to account for extra hour added
-	if (minutes + m >= 60)
+	if (minutes + m > 59)
 		miltime = (miltime + tempMT + 40) % 2400;	// % 2400 ensures time between 0 & 2359
 															 //   (since minutes adjustment guarantees
 															 //    last two digits < 60)

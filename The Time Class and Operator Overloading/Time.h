@@ -20,7 +20,7 @@ public:
 	Time();										         // Default constructor
 	Time(unsigned h, unsigned m, char AP);		   // Parameterized constructor
 	void set(unsigned h, unsigned m, char AP);	// Set time data members
-	void display(ostream& out);					   // Print time to desired output stream
+	void display(ostream& out) const;					   // Print time to desired output stream
 	void advance(unsigned h, unsigned m);		   // Advance time by given number of hours and minutes
 	bool lessThan(const Time& rhs);				   // Returns true if calling object is less than argument
 
@@ -49,8 +49,8 @@ public:
 
 private:
 	unsigned hours, minutes;	// Time in hrs/mins (combined with AM/PM)
-	char AMorPM;				   // Indicates morning/afternoon--'A' for AM, 'P' for PM
 	unsigned miltime;			   // Military (24-hour) time equivalent
+	char AMorPM;				   // Indicates morning/afternoon--'A' for AM, 'P' for PM
 };
 
 #endif		// TIME_H
