@@ -14,6 +14,7 @@ int PEMDAS(char val);
 int main() {
 	string userInput;
 
+
 	do {
 		cout << "Enter expression (or exit to end): " << endl;
 		getline(cin, userInput);
@@ -22,9 +23,15 @@ int main() {
 			cout << "Exiting program ..." << endl;
 			break;
 		}
-
-		infixToPostfixCalc(userInput);
-
+		else if (userInput[0] == '(') {
+			infixToPostfixCalc(userInput);
+		}
+		else if (isdigit(userInput[0])) {
+			infixToPostfixCalc(userInput);
+		}
+		else {
+			cout << "Invalid expression" << endl;
+		}
 	} while (1);
 }
 
@@ -97,11 +104,48 @@ void infixToPostfixCalc(string userInput) {
 			tempPost.pop();
 		}
 	}
-	cout << "infix: " << userInput << endl;
-	cout << "postFix: " << postFix << endl;
+	while (!tempPost.empty()) {
+		postFix += tempPost.getTop();
+		tempPost.pop();
+		postFix += ' ';
+	}
+	cout << "Expression: " << userInput << endl;
+	cout << "Postfix form: " << postFix << endl;
 
-	Stack<int> 
-	cout << "solution: " << solution << endl;
+
+	Stack<int> numToCalc;
+	int x, y, solution, tempSolution, stringToInt;
+
+	for (unsigned int i = 0; i < postFix.size(); ++i) {
+		if (isdigit(postFix[i])) {
+			stringToInt = postFix[i];
+			stringToInt = stringToInt - 48;
+			numToCalc.push(stringToInt);
+		}
+		if (checkOP(postFix[i])) {
+			y = numToCalc.getTop();
+			numToCalc.pop();
+			x = numToCalc.getTop();
+			numToCalc.pop();
+
+			if (postFix[i] == '+') {
+				tempSolution = x + y;
+				numToCalc.push(tempSolution);
+			}
+			if (postFix[i] == '-') {
+				tempSolution = x - y;
+				numToCalc.push(tempSolution);
+			}
+			if (postFix[i] == '*') {
+				tempSolution = x * y;
+				numToCalc.push(tempSolution);
+			}
+			if (postFix[i] == '/') {
+				tempSolution = x / y;
+				numToCalc.push(tempSolution);
+			}
+		}
+	}
+	solution = numToCalc.getTop();
+	cout << "Result: " << solution << endl;
 }
-
-
