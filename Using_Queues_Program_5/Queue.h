@@ -16,7 +16,7 @@ public:
 	T getFront();
 private:
 	T* list;
-	int front, back;
+	unsigned int front, back;
 	unsigned cap;
 };
 
